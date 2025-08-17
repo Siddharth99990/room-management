@@ -2,6 +2,7 @@ import express from 'express';
 import mongoose,{Document} from 'mongoose';
 import User,{userInterface} from "../../../models/user.model";
 import { getNextSequence } from '../../counters/helper/getNextSequence';
+import {sendEmail} from '../../../utils/email.util
 
 //create
 export const createUserService=async(name:string,email:string,password:string,role:string)=>{
@@ -17,6 +18,19 @@ export const createUserService=async(name:string,email:string,password:string,ro
         password,
         role
     });
+
+    await sendEmail({
+        to:email,
+        subject:"Welcome to Room-Management",
+        text:`Hello ${name},Welcome to our platform`,
+        html:`<h2>Hello ${name},</h2>
+      <p>Your account has been created by the admin </p>
+      <p><b>Email:</b> ${email}</p>
+      <p><b>Password:</b> ${password}</p>
+      <br/>
+      <p>Please keep this information safe and change your password after first login.</p>`
+    });
+    
     const userResponse=newUser.toObject() as any;
     delete userResponse.password;
     delete userResponse.deletedAt;

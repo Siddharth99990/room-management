@@ -1,3 +1,5 @@
+import mongoose from "mongoose";
+
 export class roomValidationError extends Error{
     public statusCode:number;
     public errors:string[];
@@ -16,15 +18,15 @@ const isValidRoomName=(roomname:string):void=>{
         errors.push("Roomname should not be empty");
     }
 
-    if(/^[a-zA-Z\s\-\d]+$/.test(roomname)){
+    if(!/^[a-zA-Z\s\-\d]+$/.test(roomname)){
         errors.push("Roomnames can only contain letters, spaces, hyphens and digits");
     }
 
-    if(/\{2,}/.test(roomname)){
+    if(/\s{2,}/.test(roomname)){
         errors.push("Roomname cannot have two consecutive spaces");
     }
 
-    if(roomname.length<2){
+    if(roomname.trim().length<2){
         errors.push("Roomname must have atleast 2 characters");
     }
 
@@ -43,7 +45,7 @@ const isValidRoomLocation=(roomlocation:string):void=>{
         errors.push("Room location can only contain letters,spaces,hyphens and digits");
     }
 
-    if(roomlocation.length<8){
+    if(roomlocation && roomlocation.trim().length<8 ){
         errors.push("Room location should be atleast 8 characters long");
     }
 
@@ -52,14 +54,14 @@ const isValidRoomLocation=(roomlocation:string):void=>{
     }
 }
 
-const validCapacity=(capacity:number):void=>{
+const isValidCapacity=(capacity:number):void=>{
     const errors:string[]=[];
-    if(!capacity || isNaN(capacity)){
+    if(typeof capacity!=='number' || isNaN(capacity)){
         errors.push("Capacity should be provided and should be a number");
     }
 
-    if(capacity<=0 || capacity>50){
-        errors.push("Capacity cannot be less than or equal to zero and can only lie in the range of 0-50");
+    if(capacity<=4 || capacity>50){
+        errors.push("Capacity must lie in the range of 4-50");
     }
 
     if(errors.length>0){
@@ -67,21 +69,92 @@ const validCapacity=(capacity:number):void=>{
     }
 }
 
-const validEquipment=(equipment:string[]):void=>{
+const isValidEquipment=(equipment:string[]):void=>{
     const errors:string[]=[];
-    if(equipment.length<2){
-        errors.push("Atleast 2 equipment must be mentioned");
-    }
 
     if(!equipment || equipment.length===0){
         errors.push("Equipment is required and cannot be left empty");
     }
 
+    if(Array.isArray(equipment) && equipment.length<2){
+        errors.push("Atleast 2 equipment must be mentioned");
+    }
+
     if(errors.length>0){
         throw new roomValidationError("Room validation failed:",errors);
     }
 }
 
+export const validateRegisterData=(data:{
+    roomname:string,
+    roomlocation:string,
+    capacity:number,
+    equipment:string[],
+
+}):{
+    roomname:string;
+    roomlocation:string;
+    capacity:number;
+    equipment:string[];
+}=>{
+    const {roomname,roomlocation,capacity,equipment}=data;
+
+    isValidRoomName(roomname);
+    isValidRoomLocation(roomlocation);
+    isValidCapacity(capacity);
+    isValidEquipment(equipment);
+
+    return{
+        roomname,
+        roomlocation,
+        capacity,
+        equipment
+    }
+};
+
+export const validateUpdateData=(updateData:any)=>{
+    const{roomname,roomlocation,capacity,equipment}=updateData;
+
+    if(!roomname && !roomlocation && capacity===undefined && !equipment && Object.keys(updateData).length===0){
+        throw new roomValidationError("Update validation failed",["Atleast one field is needed for updating information"]);
+    }
+
+    const updates:any={};
+
+    if(roomname!=undefined){
+        isValidRoomName(roomname);
+        updates.roomname=roomname;
+    }
+
+    if(roomlocation!=undefined){
+        isValidRoomLocation(roomlocation);
+        updates.roomlocation=roomlocation;
+    }
+
+    if(capacity!==undefined){
+        isValidCapacity(capacity);
+        updates.capacity=capacity;
+    }
+
+    if(equipment!==undefined){
+        isValidEquipment(equipment);
+        updates.equipment=equipment;
+    }
+
+    const restrictedFields=["_id","roomid"];
+    const invalidFields=Object.keys(updateData).filter(field=>restrictedFields.includes(field));
+
+    if(invalidFields.length>0){
+        throw new roomValidationError("Update validation failed",[`The update body cannot contain the following fields: ${restrictedFields.join(', ')}`]);
+    }
+
+    return updates;
+};
 
 
-
+export const roomValidation={
+    isValidRoomLocation,
+    isValidRoomName,
+    isValidCapacity,
+    isValidEquipment,
+};

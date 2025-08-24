@@ -1,20 +1,22 @@
 import express from 'express';
-import { deleteAllUsers, getAllUsers, registerUser,getUserById, updateUserInfo,restoreDeletedUsers,deleteUserById} from './user.controller';
-import { requireAdmin,requireEmployeeOrAdmin,authenticateToken } from '../../../middleware/authmiddleware';
+import { getAllUsers, registerUser,getUserById, updateUserInfo,deleteUserById} from './user.controller';
+import { requireAdmin,requireEmployeeOrAdmin,authenticateToken, requirePasswordChange } from '../../../middleware/authmiddleware';
 const router=express.Router();
 
-router.post('/registeruser',authenticateToken,requireAdmin,registerUser);
+//POST
+router.post('/user',authenticateToken,requirePasswordChange,requireAdmin,registerUser);
 
-router.get('/getallusers',authenticateToken,requireAdmin,getAllUsers);
-router.get('/getuserbyid/:userid',authenticateToken,requireEmployeeOrAdmin,getUserById);
+//GET
+router.get('/users',authenticateToken,requireAdmin,requirePasswordChange,getAllUsers);
+router.get('/:userid',authenticateToken,requireEmployeeOrAdmin,requirePasswordChange,getUserById);
 
-router.put('/updateuserinfo/:userid',authenticateToken,requireEmployeeOrAdmin,updateUserInfo);
-router.put('/restoreusers/:userid',authenticateToken,requireAdmin,restoreDeletedUsers);
+//PUT
+router.put('/:userid',authenticateToken,requireEmployeeOrAdmin,requirePasswordChange,updateUserInfo);
 
-router.delete('/deleteallusers',authenticateToken,requireAdmin,deleteAllUsers);
-router.delete('/deleteuserbyid/:userid',authenticateToken,requireAdmin,deleteUserById);
+//DELETE
+router.delete('/:userid',authenticateToken,requireAdmin,requirePasswordChange,deleteUserById);
 
-
+// router.delete('/deleteallusers',authenticateToken,requireAdmin,requirePasswordChange,deleteAllUsers);
 export default router;
 
 

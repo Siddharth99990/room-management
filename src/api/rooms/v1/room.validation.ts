@@ -99,6 +99,27 @@ export const validateRegisterData=(data:{
 }=>{
     const {roomname,roomlocation,capacity,equipment}=data;
 
+<<<<<<< Updated upstream
+=======
+    const errors:string[]=[];
+
+    if (!data.roomname || data.roomname.trim() === "") {
+        errors.push("Roomname should not be empty");
+    }
+    if (!data.roomlocation || data.roomlocation.trim() === "") {
+        errors.push("Room location must be provided");
+    }
+    if (capacity === null || capacity === undefined || typeof capacity !== "number" || isNaN(capacity)) {
+        errors.push("Capacity should be provided and should be a number");
+    } else if (capacity < 4 || capacity > 50) {
+        errors.push("Capacity must lie in the range of 4-50");
+    }
+
+    if (errors.length > 0) {
+        throw new roomValidationError("Room validation failed",errors); 
+    }
+
+>>>>>>> Stashed changes
     isValidRoomName(roomname);
     isValidRoomLocation(roomlocation);
     isValidCapacity(capacity);
@@ -141,7 +162,11 @@ export const validateUpdateData=(updateData:any)=>{
         updates.equipment=equipment;
     }
 
+<<<<<<< Updated upstream
     const restrictedFields=["_id","roomid"];
+=======
+    const restrictedFields=["_id","roomid","isDeleted","deletedAt"];
+>>>>>>> Stashed changes
     const invalidFields=Object.keys(updateData).filter(field=>restrictedFields.includes(field));
 
     if(invalidFields.length>0){
@@ -150,6 +175,18 @@ export const validateUpdateData=(updateData:any)=>{
 
     return updates;
 };
+<<<<<<< Updated upstream
+=======
+
+
+export const roomValidation={
+    isValidRoomLocation,
+    isValidRoomName,
+    isValidCapacity,
+    isValidEquipment,
+};
+
+>>>>>>> Stashed changes
 
 
 export const roomValidation={

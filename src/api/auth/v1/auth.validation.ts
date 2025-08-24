@@ -55,6 +55,40 @@ const validateLoginPassword=(password:string):void=>{
     }
 };
 
+const validateChangePassword=(password:string):void=>{
+    const errors:string[]=[];
+
+    if(!password||password.trim().length===0){
+        errors.push("Password field is required");
+    }
+
+    if(password && password.length<6){
+        errors.push("Password must be atleast 6 character long");
+    }
+
+    if(password && password.length>128){
+        errors.push("Password exceeds the max character length");
+    }
+
+    if(password){
+        if(!/(?=.*[a-z])/.test(password)){
+            errors.push("Password must contain atleast one lowercase letter");
+        }
+        if(!/(?=.*[A-Z])/.test(password)){
+            errors.push("Password must contain atleast one uppercase letter");
+        }
+        if(!/(?=.*\d)/.test(password)){
+            errors.push("Password must contain atleast one number");
+        }
+        if(!/(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])/.test(password)){
+            errors.push("Password must contain atleast one special character");
+        }
+    }
+    if(errors.length>0){
+        throw new authValidationError("Password validation failed",errors);
+    }
+}
+
 export const validateLoginData=(data:{
     email:string;
     password:string;
@@ -85,6 +119,44 @@ export const validateLoginData=(data:{
     };
 };
 
+export const validateChangePasswordData=(data:{
+    email:string,
+    oldPassword:string,
+    newPassword:string
+}):{
+    email:string;
+    oldPassword:string;
+    newPassword:string;
+}=>{
+    const{email,oldPassword,newPassword}=data;
+
+    if(!email){
+        throw new authValidationError("Password change failed",["Email is required for changing password"]);
+    }
+
+    if(!oldPassword){
+        throw new authValidationError("Password change failed",["old password is required to change the password"]);
+    }
+
+    if(!newPassword){
+        throw new authValidationError("Password change failed",["new password is required to change the password"]);
+    }
+
+    validateLoginEmail(email);
+    validateLoginPassword(oldPassword);
+    validateChangePassword(newPassword);
+
+    if(oldPassword===newPassword){
+        throw new authValidationError("Password change failed",["New password cannot be the same as old password"])
+    }
+
+    return{
+        email:email,
+        oldPassword:oldPassword,
+        newPassword:newPassword
+    };
+};
+
 export const validateTokenFormat=(token:string):void=>{
     const errors:string[]=[];
 
@@ -107,7 +179,7 @@ export const validateAuthorizationHeader=(authHeader:string|undefined):string|un
         errors.push("Authorization header is needed");
         throw new authValidationError("Authorization validation failed",errors);
     }
-    const parts=authHeader.split('.');
+    const parts=authHeader.split(' ');
 
     if(parts.length!==2){
         errors.push("Authorization header should be in the format: Bearer<token>");
@@ -132,7 +204,8 @@ export const authValidationUtils={
     validateLoginEmail,
     validateLoginPassword,
     validateTokenFormat,
-    validateAuthorizationHeader
+    validateAuthorizationHeader,
+    validateChangePassword
 };
 
 

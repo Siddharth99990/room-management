@@ -1,19 +1,24 @@
 import mongoose,{Schema,Document, mongo} from 'mongoose';
 
 interface Attendee{
-    userid:mongoose.Types.ObjectId,
+    userid:number,
     name:string,
     status:'accepted'|'declined'|'invited',
     acceptedAt:Date
 }
 
-interface bookingInterface extends Document{
+interface createdBy{
+    userid:number,
+    name:string
+}
+
+export interface bookingInterface extends Document{
     bookingid:number,
     starttime:Date,
     endtime:Date,
-    roomid:mongoose.Types.ObjectId,
-    userid:mongoose.Types.ObjectId,
-    status:'pending'|'confirmed'|'cancelled',
+    roomid:number,
+    createdBy:createdBy,
+    status:'confirmed'|'cancelled',
     attendees:Attendee[]
 }
 
@@ -32,20 +37,29 @@ const bookingSchema=new Schema<bookingInterface>({
         required:true,
     },
     roomid:{
-        type:mongoose.Schema.Types.ObjectId,
-        ref:"Rooms",
+        type:Number,
         required:true,
+        ref:"Room"
+    },
+    createdBy: {
+      userid: {
+        type: Number,
+        required: true,
+      },
+      name: {
+        type: String,
+        required: true,
+      },
     },
     status:{
         type:String,
         required:true,
-        enum:['pending','confirmed','cancelled'],
-        default:'pending'
+        enum:['confirmed','cancelled'],
+        default:'confirmed'
     },
     attendees:[{
         userid:{
-            type:mongoose.Schema.ObjectId,
-            ref:"Users",
+            type:Number,
             required:true
         },
         name:{
@@ -60,9 +74,14 @@ const bookingSchema=new Schema<bookingInterface>({
         },
         acceptedAt:{
             type:Date,
-            default:Date.now
+            default:null
         }
     }]
 },{timestamps:true});
+
+bookingSchema.index(
+    {roomid:1,starttime:1,endtime:1},
+    {unique:true}
+);
 
 export default mongoose.model<bookingInterface>("booking",bookingSchema,"Bookings");

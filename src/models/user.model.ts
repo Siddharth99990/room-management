@@ -7,6 +7,8 @@ export interface userInterface extends Document{
     email:string,
     password:string,
     role:string,
+    isTemporaryPassword?:boolean,
+    passwordChangedAt?:Date,
     createdAt?:Date,
     updatedAt?:Date,
     isDeleted?:boolean,
@@ -39,6 +41,14 @@ const userSchema=new Schema<userInterface>({
         enum:["employee","admin"],
         default:"employee"
     },
+    isTemporaryPassword:{
+        type:Boolean,
+        default:true
+    },
+    passwordChangedAt:{
+        type:Date,
+        default:null
+    },
     isDeleted:{
         type:Boolean,
         default:false
@@ -64,6 +74,11 @@ userSchema.pre("save",async function(next){
     if(!this.isModified("password"))return next();
     const salt=await bcrypt.genSalt(10);
     this.password=await bcrypt.hash(this.password,salt);
+
+    if(!this.isNew){
+        this.isTemporaryPassword=false;
+        this.passwordChangedAt=new Date();
+    }
     next();
 });
 

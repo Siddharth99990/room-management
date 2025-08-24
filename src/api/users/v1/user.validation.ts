@@ -1,4 +1,6 @@
 import {Request,Response} from 'express';
+import { roomValidationError } from '../../rooms/v1/room.validation';
+
 
 export class validationError extends Error{
     public statusCode:number;
@@ -51,7 +53,7 @@ const validateName=(name:string):void=>{
     if(!/^[a-zA-Z\s\-]+$/.test(name)){
         errors.push("Name can only contain letters,spaces and hyphens")
     }
-    if(/\{2,}/.test(name)){
+    if(/\s{2,}/.test(name)){
         errors.push("Name cannot contain two consecutive spaces");
     }
     if(errors.length>0){
@@ -89,6 +91,7 @@ export const validateUserRegistrationData=(data:{
         throw new validationError("Email validation failed",['please provide a valid email for registration']);
     }
 
+
     validatePassword(password);
     validateRole(role);
 
@@ -104,7 +107,7 @@ export const validateUserUpdateData=(data:any,userid:number):{
     validatedData:any;
     userid:number;
 }=>{
-    const{name,email}=data;
+    const{name,email,password}=data;
 
     if(!name && !email &&Object.keys(data).length===0){
         throw new validationError("Update validation failed",["Atleast one field(name or email) is needed for the update"]);
@@ -127,6 +130,10 @@ export const validateUserUpdateData=(data:any,userid:number):{
             throw new validationError('Email validation failed', ['Please provide a valid email address']);
         }
         updates.email = email;
+    }
+
+    if(password!==undefined){
+        validatePassword(password);
     }
 
     const restrictedFields=['userid','_id','isDeleted'];

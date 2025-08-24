@@ -1,12 +1,13 @@
 import { Request,Response } from 'express';
 import { createUserService ,
         getUsersService,
-        softdeleteUsersService,
         finduserByIdService,
         updateUserInfoService,
-        restoreDeletedUsersService,
         softDeleteUsersByIdService} from './user.service';
 import {validationError,validateUserRegistrationData,validateUserUpdateData} from './user.validation';
+import User from '../../../models/user.model';
+import { errors } from 'mongodb-memory-server';
+
 
 //create
 export const registerUser= async(req:Request,res:Response)=>{
@@ -18,6 +19,7 @@ export const registerUser= async(req:Request,res:Response)=>{
             validatedData.password,
             validatedData.role
         );
+        
         return res.status(201).json({
             success:true,
             message:"User validated successfully",
@@ -35,8 +37,8 @@ export const registerUser= async(req:Request,res:Response)=>{
         if(err.code===11000 && err.keyPattern?.email){
             return res.status(400).json({
                 success:false,
-                message:"Duplicate Value",
-                error:"The email entered is a duplicate"
+                message:"The email entered is a duplicate",
+                error:"The email you provided is a duplicate value please provide a valid email"
             });
         }
         return res.status(400).json({
@@ -97,17 +99,6 @@ export const updateUserInfo=async(req:Request,res:Response)=>{
     }
 }
 
-//delete
-export const deleteAllUsers=async(req:Request,res:Response)=>{
-    try{
-        const result=await softdeleteUsersService();
-        return res.status(200).json(result);
-    }catch(err:any){
-        console.error("Error deleting the users,",err.message);
-        return res.status(404).json({message:"There was an internal server error",error:err.message});
-    }
-};
-
 //deletebyid
 export const deleteUserById=async(req:Request,res:Response)=>{
     try{
@@ -115,18 +106,31 @@ export const deleteUserById=async(req:Request,res:Response)=>{
         return res.status(200).json(result);
     }catch(err:any){
         console.error("Error deleting user:",err.message);
-        return res.status(404).json({message:"There was an internal error",error:err.message});
+        return res.status(404).json({
+            message:"There was an error deleting user",
+            error:err.message
+        });
     }
 };
 
-//restore
-export const restoreDeletedUsers=async(req:Request,res:Response)=>{
-    try{
-        const restoredusers=await restoreDeletedUsersService(Number(req.params.userid));
-        return res.status(200).json(restoredusers);
-    }catch(err:any){
-        console.error("There was an error restoring ",err.message);
-        return res.status(404).json({message:"There was an error while restoring the users",error:err.message});
-    }
-}
+/*restore
+// export const restoreDeletedUsers=async(req:Request,res:Response)=>{
+//     try{
+//         const restoredusers=await restoreDeletedUsersService(Number(req.params.userid));
+//         return res.status(200).json(restoredusers);
+//     }catch(err:any){
+//         console.error("There was an error restoring ",err.message);
+//         return res.status(404).json({message:"There was an error while restoring the users",error:err.message});
+//     }
+ }*/
 
+//delete all
+/*export const deleteAllUsers=async(req:Request,res:Response)=>{
+//     try{
+//         const result=await softdeleteUsersService();
+//         return res.status(200).json(result);
+//     }catch(err:any){
+//         console.error("Error deleting the users,",err.message);
+//         return res.status(404).json({message:"There was an internal server error",error:err.message});
+//     }
+ };*/

@@ -99,8 +99,6 @@ export const validateRegisterData=(data:{
 }=>{
     const {roomname,roomlocation,capacity,equipment}=data;
 
-<<<<<<< Updated upstream
-=======
     const errors:string[]=[];
 
     if (!data.roomname || data.roomname.trim() === "") {
@@ -119,7 +117,6 @@ export const validateRegisterData=(data:{
         throw new roomValidationError("Room validation failed",errors); 
     }
 
->>>>>>> Stashed changes
     isValidRoomName(roomname);
     isValidRoomLocation(roomlocation);
     isValidCapacity(capacity);
@@ -162,11 +159,7 @@ export const validateUpdateData=(updateData:any)=>{
         updates.equipment=equipment;
     }
 
-<<<<<<< Updated upstream
-    const restrictedFields=["_id","roomid"];
-=======
     const restrictedFields=["_id","roomid","isDeleted","deletedAt"];
->>>>>>> Stashed changes
     const invalidFields=Object.keys(updateData).filter(field=>restrictedFields.includes(field));
 
     if(invalidFields.length>0){
@@ -175,8 +168,6 @@ export const validateUpdateData=(updateData:any)=>{
 
     return updates;
 };
-<<<<<<< Updated upstream
-=======
 
 
 export const roomValidation={
@@ -186,12 +177,3 @@ export const roomValidation={
     isValidEquipment,
 };
 
->>>>>>> Stashed changes
-
-
-export const roomValidation={
-    isValidRoomLocation,
-    isValidRoomName,
-    isValidCapacity,
-    isValidEquipment,
-};

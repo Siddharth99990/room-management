@@ -1,5 +1,6 @@
 import app from "./app";
 import { connectDatabase } from "./config/connectDatabase";
+import cors from 'cors'
 
 const PORT=process.env.PORT;
 

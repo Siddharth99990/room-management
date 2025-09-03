@@ -1,14 +1,9 @@
 import express from 'express';
 import mongoose,{Document} from 'mongoose';
 import User,{userInterface} from "../../../models/user.model";
-<<<<<<< Updated upstream
-import { getNextSequence } from '../../counters/helper/getNextSequence';
-import {sendEmail} from '../../../utils/email.util
-=======
 import { getNextSequence } from '../../../utils/getNextSequence';
 import { sendEmail } from '../../../utils/email.util';
 import { validationError } from './user.validation';
->>>>>>> Stashed changes
 
 //create
 export const createUserService=async(name:string,email:string,password:string,role:string)=>{
@@ -25,11 +20,7 @@ export const createUserService=async(name:string,email:string,password:string,ro
         role
     });
 
-<<<<<<< Updated upstream
-    await sendEmail({
-=======
     sendEmail({
->>>>>>> Stashed changes
         to:email,
         subject:"Welcome to Room-Management",
         text:`Hello ${name},Welcome to our platform`,
@@ -38,17 +29,11 @@ export const createUserService=async(name:string,email:string,password:string,ro
       <p><b>Email:</b> ${email}</p>
       <p><b>Password:</b> ${password}</p>
       <br/>
-<<<<<<< Updated upstream
-      <p>Please keep this information safe and change your password after first login.</p>`
-    });
-    
-=======
       <p>Please keep this information safe and change your password after first login. Use your email to access the password change</p>`
     });
 
 
 
->>>>>>> Stashed changes
     const userResponse=newUser.toObject() as any;
     delete userResponse.password;
     delete userResponse.deletedAt;

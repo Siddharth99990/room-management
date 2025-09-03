@@ -13,6 +13,8 @@ interface createdBy{
 }
 
 export interface bookingInterface extends Document{
+    title:string,
+    description?:string,
     bookingid:number,
     starttime:Date,
     endtime:Date,
@@ -23,6 +25,14 @@ export interface bookingInterface extends Document{
 }
 
 const bookingSchema=new Schema<bookingInterface>({
+    title:{
+        type:String,
+        required:true,
+    },
+    description:{
+        type:String,
+        maxLength:500,
+    },
     bookingid:{
         type:Number,
         required:true,

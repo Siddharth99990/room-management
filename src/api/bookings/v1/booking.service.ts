@@ -1,23 +1,17 @@
 import mongoose from "mongoose";
-<<<<<<< Updated upstream
-import { getNextSequence } from "../../counters/helper/getNextSequence";
-=======
 import { getNextSequence } from "../../../utils/getNextSequence";
->>>>>>> Stashed changes
 import Booking from '../../../models/booking.model';
 import { bookingValidationError, validateBookingUpdateData } from "./booking.validation";
 import roomModel from "../../../models/room.model";
 import bookingInterface from '../../../models/room.model'
 import User from '../../../models/user.model';
 import userModel from "../../../models/user.model";
-<<<<<<< Updated upstream
-=======
 import { checkBookingConflicts } from "./helpers/conflictchecker.helper";
-import { sendInvitation } from "../../../utils/email.util";
 
->>>>>>> Stashed changes
 
 interface createBookingData{
+    title:string;
+    description?:string;
     starttime:Date;
     endtime:Date;
     roomid:number;
@@ -26,38 +20,10 @@ interface createBookingData{
 }
 
 interface updateBookingData{
+    title?:string;
+    description?:string;
     starttime?:Date;
     endtime?:Date;
-<<<<<<< Updated upstream
-    status?:'cancelled'|'pending'|'confirmed';
-}
-
-//conflict check
-export const checkBookingConflicts=async(roomid:number,starttime:Date,endtime:Date,excludeBookingId?:number,session?:mongoose.ClientSession):Promise<Boolean>=>{
-    const conflitQuery:any={
-        roomid:roomid,
-        status:{$ne:'cancelled'},
-        $or:[{
-            starttime:{$lte:starttime},
-            endtime:{$gt:starttime}
-        },
-        {
-            starttime:{$lt:endtime},
-            endtime:{$gte:endtime}
-        },
-        {
-            starttime:{$gte:starttime},
-            endtime:{$lte:endtime}
-        }]
-    };
-
-    if(excludeBookingId){
-        conflitQuery.bookingid={$ne:excludeBookingId}
-    }
-    const conflicts=await Booking.find(conflitQuery).session(session||null);
-    return conflicts.length>0;
-};
-=======
     status?:'cancelled'|'confirmed';
     roomid?:number;
 }
@@ -80,44 +46,26 @@ interface paginationOptions{
     sortBy:string;
     sortOrder:'asc'|'desc'
 }
->>>>>>> Stashed changes
 
 //create booking
 export const createBookingService=async(
     bookingData:createBookingData,
     currentUserId:number
 )=>{
-<<<<<<< Updated upstream
-    const session=await mongoose.startSession();
-    session.startTransaction();
-    try{
-        const{starttime,endtime,roomid,userid,attendees}=bookingData;
-
-        const room=await roomModel.findOne({roomid}).session(session);
-=======
     let committed=false;
-        const{starttime,endtime,roomid,userid,attendees}=bookingData;
+        const{starttime,endtime,roomid,userid,attendees,title,description}=bookingData;
 
         const room=await roomModel.findOne({roomid})
->>>>>>> Stashed changes
         if(!room){
             throw new bookingValidationError("Room not found",["The specified room does not exist"]);
         }
 
-<<<<<<< Updated upstream
-        const user=await userModel.findOne({userid}).session(session);
-=======
         const user=await userModel.findOne({userid})
->>>>>>> Stashed changes
         if(!user){
             throw new bookingValidationError("User not found",["The specified user does not exist"]);
         }
 
-<<<<<<< Updated upstream
-        const hasConflict=await checkBookingConflicts(roomid,starttime,endtime,undefined,session);
-=======
         const hasConflict=await checkBookingConflicts(roomid,starttime,endtime,undefined);
->>>>>>> Stashed changes
         if(hasConflict){
             throw new bookingValidationError("Time slot conflicts with existing booking",["There is a conflict in booking timings"]);
         }
@@ -135,11 +83,7 @@ export const createBookingService=async(
             }
 
             for(const attendee of attendees){
-<<<<<<< Updated upstream
-                const attendeeUser=await User.findOne({userid:attendee.userid}).session(session);
-=======
                 const attendeeUser=await User.findOne({userid:attendee.userid});
->>>>>>> Stashed changes
                 if(!attendeeUser){
                     throw new Error(`Attendee with ID ${attendee.userid} not found`);
                 }
@@ -150,87 +94,36 @@ export const createBookingService=async(
                 });
             }
         }
-<<<<<<< Updated upstream
-        const nextBookingId=await getNextSequence('bookingid',session);
-=======
         const nextBookingId=await getNextSequence('bookingid');
->>>>>>> Stashed changes
 
         try{
             await Booking.create({
                 bookingid:nextBookingId,
+                title,
+                description:description ||'',
                 starttime,
                 endtime,
                 roomid:roomid,
                 createdBy:{userid:user.userid,name:user.name},
                 attendees:processedAttendees||[],
-<<<<<<< Updated upstream
-                status:'pending'
-            },{session});
-=======
             });
->>>>>>> Stashed changes
         }catch(err:any){
             if(err.code===11000){
                 throw new bookingValidationError("Time slot conflicts with existing booking",["There is a conflict in booking timings"]);
             }
             throw err;
         }
-<<<<<<< Updated upstream
-        await session.commitTransaction();
-
-        const populatedBooking=await Booking.findOne({bookingid:nextBookingId})
-        .populate('roomid','name capacity roomlocation')
-        .select("-_id -__v -updatedAt ");
-
-        return populatedBooking;
-    }catch(error){
-        await session.abortTransaction();
-        throw error;
-    }finally{
-        session.endSession();
-    }
-=======
         
 
         const populatedBooking=await Booking.findOne({bookingid:nextBookingId})
         .populate({path:'roomid',foreignField:"roomid",select:'roomname capacity roomlocation -_id'})
         .select("-_id -__v -updatedAt -attendees._id -attendees.acceptedAt ");
 
-        if (populatedBooking && populatedBooking.attendees && populatedBooking.attendees.length > 0) {
-            try {
-                for (const attendee of populatedBooking.attendees) {
-                    // Fetch attendee user to get email
-                    const attendeeUser = await User.findOne({ userid: attendee.userid });
-                    if (attendeeUser && attendeeUser.email) {
-                        await sendInvitation({
-                            to: attendeeUser.email,
-                            attendeeName: attendee.name,
-                            booking: populatedBooking,
-                            attendeeUserId: attendee.userid
-                        });
-                    }
-                }
-            } catch (emailError) {
-                console.error("Failed to send invitation emails:", emailError);
-            }
-        }
-
         return populatedBooking;
->>>>>>> Stashed changes
     
 }
 
 //get all bookings
-<<<<<<< Updated upstream
-export const getBookingsService=async()=>{
-    const bookings=await Booking.find({status:{$ne:'cancelled'}}).select("-_id -__v -updatedAt -createdAt -attendees._id -attendees.acceptedAt");
-    if(!bookings){
-        throw new Error("There are currently no bookings");
-    }
-    return bookings.map(booking=>booking.toObject());
-}
-=======
 export const getBookingsService=async(filters:{
     roomid?:number,
     status?:string,
@@ -318,7 +211,6 @@ export const getBookingsService=async(filters:{
         sortOrder:sortOrder
     }
 };
->>>>>>> Stashed changes
 
 //bookings by id
 export const getBookingByIdService=async(bookingid:number)=>{
@@ -378,11 +270,7 @@ export const getAvailableRoomsService=async(
     }
 
     const conflictingBookings=await Booking.find({
-<<<<<<< Updated upstream
-        status:{$in:["pending","confirmed"]},
-=======
         status:{$in:["confirmed"]},
->>>>>>> Stashed changes
         $or:[
            {
                 starttime: { $lte: starttime },
@@ -427,8 +315,4 @@ export const getAvailableRoomsService=async(
         message:`${availableRooms.length} rooms available for the requested time slot`,
         availableRooms:availableRooms.map(room=>room.toObject())
     };
-<<<<<<< Updated upstream
 }
-=======
-}
->>>>>>> Stashed changes

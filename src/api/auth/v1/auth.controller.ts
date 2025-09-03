@@ -3,6 +3,7 @@ import { changePasswordService, loginUserService } from "./auth.service";
 import { authValidationError, validateChangePasswordData } from "./auth.validation";
 import { bookingValidationError } from "../../bookings/v1/booking.validation";
 import { validationError } from "../../users/v1/user.validation";
+import User from '../../../models/user.model';
 
 export const userLogin=async(req:Request,res:Response)=>{
     try{
@@ -90,3 +91,47 @@ export const userLogout=(req:Request,res:Response)=>{
         message:"LogOut successful"
     });
 }
+
+export const checkAuthStatus=async(req:Request,res:Response)=>{
+    try{
+        if(!req.user){
+            return res.status(401).json({
+                success:false,
+                message:"Not authenticated"
+            });
+        }
+        const user=await User.findOne({
+                userid:req.user.userid,
+                isDeleted:{$ne:true}
+        }).select('-password');
+
+        if(!user){
+            return res.status(404).json({
+                success:false,
+                message:"User not found"
+            });
+        }
+
+        const userResponse={
+            userid:user.userid,
+            name:user.name,
+            email:user.email,
+            role:user.role,
+            createdAt:user.createdAt,
+            updatedAt:user.updatedAt
+        };
+
+        res.status(200).json({
+            success:true,
+            message:"Authentication verified",
+            data:{user:userResponse}
+        });
+    }catch(err:any){
+        console.error("Auth check error:",err);
+        res.status(400).json({
+            success:false,
+            message:"Something went wrong",
+            error:err.message
+        });
+    }
+};

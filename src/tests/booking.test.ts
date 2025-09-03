@@ -1698,45 +1698,7 @@ describe('Booking API Test Suite', () => {
             expect(response.body.data[0].roomid).toBe(testRoom2.roomid);
         });
 
-        // it('should handle multiple conflicting bookings correctly', async () => {
-        //     const queryStart = new Date();
-        //     queryStart.setDate(queryStart.getDate() + 6);
-        //     queryStart.setHours(10, 0, 0, 0);
-
-        //     const queryEnd = new Date(queryStart);
-        //     queryEnd.setHours(11, 0, 0, 0);
-
-        //     await Booking.create({
-        //         bookingid: 1,
-        //         starttime: queryStart,
-        //         endtime: queryEnd,
-        //         roomid: testRoom.roomid,
-        //         createdBy: { userid: 1, name: "Admin User" },
-        //         attendees: [],
-        //         status: 'confirmed'
-        //     });
-
-        //     await Booking.create({
-        //         bookingid: 2,
-        //         starttime: queryStart,
-        //         endtime: queryEnd,
-        //         roomid: testRoom2.roomid,
-        //         createdBy: { userid: 2, name: "Employee User" },
-        //         attendees: [],
-        //         status: 'confirmed'
-        //     });
-
-        //     const response = await request(app)
-        //         .get(`/api/booking/v1/availablerooms?starttime=${queryStart.toISOString()}&endtime=${queryEnd.toISOString()}`)
-        //         .set('Cookie', `token=${adminToken}`)
-        //         .expect(200);
-
-        //     expect(response.body.success).toBe(true);
-        //     expect(response.body.data).toHaveLength(0);
-        // });
-
         it('should exclude deleted rooms from available rooms', async () => {
-            // Create a deleted room
             const deletedRoom = await Room.create({
                 roomid: 3,
                 roomname: 'Deleted Room',
@@ -1865,45 +1827,6 @@ describe('Booking API Test Suite', () => {
             expect(response.body.message).toBe('Something went wrong');
             expect(response.body.error).toBe('Start time must be before end time');
         });
-
-        // it('should return custom message when no rooms are available', async () => {
-        //     const queryStart = new Date();
-        //     queryStart.setDate(queryStart.getDate() + 7);
-        //     queryStart.setHours(10, 0, 0, 0);
-
-        //     const queryEnd = new Date(queryStart);
-        //     queryEnd.setHours(11, 0, 0, 0);
-
-        //     // Book all available rooms
-        //     await Booking.create({
-        //         bookingid: 1,
-        //         starttime: queryStart,
-        //         endtime: queryEnd,
-        //         roomid: testRoom.roomid,
-        //         createdBy: { userid: 1, name: "Admin User" },
-        //         attendees: [],
-        //         status: 'confirmed'
-        //     });
-
-        //     await Booking.create({
-        //         bookingid: 2,
-        //         starttime: queryStart,
-        //         endtime: queryEnd,
-        //         roomid: testRoom2.roomid,
-        //         createdBy: { userid: 2, name: "Employee User" },
-        //         attendees: [],
-        //         status: 'confirmed'
-        //     });
-
-        //     const response = await request(app)
-        //         .get(`/api/booking/v1/availablerooms?starttime=${queryStart.toISOString()}&endtime=${queryEnd.toISOString()}`)
-        //         .set('Cookie', `token=${adminToken}`)
-        //         .expect(200);
-
-        //     expect(response.body.success).toBe(true);
-        //     expect(response.body.message).toBe('These are the available rooms');
-        //     expect(response.body.data).toHaveLength(0);
-        // });
 
         it('should fail without authentication', async () => {
             const tomorrow = new Date();

@@ -107,18 +107,40 @@ const validateAttendees=(capacity?:number,attendees?:any[]):void=>{
     }
 };
 
+const validateTitle = (title: string): void => {
+    const errors: string[] = [];
+    
+    if (!title || title.trim().length === 0) {
+        errors.push("Title is required");
+    }
+    
+    if (title && title.length > 200) {
+        errors.push("Title cannot exceed 200 characters");
+    }
+    
+    if (errors.length > 0) {
+        throw new bookingValidationError("Title validation failed", errors);
+    }
+};
+
 export const validateCreateBookingData=async (data:{
+    title:string;
+    description?:string;
     starttime:string|Date;
     endtime:string|Date;
     roomid:number;
     attendees?:any[]|undefined;
 }):Promise<{
+    title:string;
+    description?:string;
     starttime:Date;
     endtime:Date;
     roomid:number;
     attendees?:any[]|undefined;
 }>=>{
-    const {starttime,endtime,roomid,attendees}=data;
+    const {title,description,starttime,endtime,roomid,attendees}=data;
+
+    validateTitle(title);
 
     validateDateTime(starttime,"Start time");
     validateDateTime(endtime,"End time");
@@ -133,11 +155,7 @@ export const validateCreateBookingData=async (data:{
 
     if(attendees && attendees.length>0){
         try{
-<<<<<<< Updated upstream
-            const room=await Room.findById({roomid});
-=======
             const room=await Room.findOne({roomid:roomid});
->>>>>>> Stashed changes
             if(room){
                 roomcapacity=room.capacity;
             }
@@ -148,6 +166,8 @@ export const validateCreateBookingData=async (data:{
     validateAttendees(roomcapacity,attendees);
 
     return{
+        title:title,
+        description:description as any,
         starttime:startDate,
         endtime:endDate,
         roomid,
@@ -156,26 +176,32 @@ export const validateCreateBookingData=async (data:{
 };
 
 export const validateBookingUpdateData=async(data:{
+    title?:string;
+    description?:string;
     starttime?:string|Date;
     endtime?:string|Date;
     status?:string,
-<<<<<<< Updated upstream
-=======
     roomid?:number,
->>>>>>> Stashed changes
     attendees?:any[];
 },currentRoomId?:number):Promise<{
+    title?:string;
+    description?:string;
     starttime?:Date;
     endtime?:Date;
-<<<<<<< Updated upstream
-    status?:'pending'|'confirmed'|'cancelled';
-=======
     status?:'confirmed'|'cancelled';
     roomid?:Number;
->>>>>>> Stashed changes
     attendees?:any[];
 }>=>{
     const updates:any={};
+
+    if (data.title !== undefined) {
+        validateTitle(data.title);
+        updates.title = data.title.trim();
+    }
+
+    if (data.description !== undefined) {
+        updates.description = data.description?.trim();
+    }
 
     if(data.starttime!==undefined){
         validateDateTime(data.starttime,"Start time");
@@ -191,10 +217,6 @@ export const validateBookingUpdateData=async(data:{
         validateTimeRange(updates.starttime,updates.endtime);
     }
 
-<<<<<<< Updated upstream
-    if(data.status!==undefined){
-        if(!['pending','confirmed','cancelled'].includes(data.status)){
-=======
     if(data.roomid!==undefined){
         validateRoomId(data.roomid);
         const newRoom=await Room.findOne({roomid:data.roomid});
@@ -206,7 +228,6 @@ export const validateBookingUpdateData=async(data:{
 
     if(data.status!==undefined){
         if(!['confirmed','cancelled'].includes(data.status)){
->>>>>>> Stashed changes
             throw new bookingValidationError("Status validation failed",["Invalid status provided"]);
         }
         updates.status=data.status;
@@ -214,15 +235,6 @@ export const validateBookingUpdateData=async(data:{
 
     if(data.attendees !== undefined){
         let roomcapacity;
-<<<<<<< Updated upstream
-        const roomIdToCheck=currentRoomId;
-
-        if(roomIdToCheck && data.attendees.length>0){
-                const room=await Room.findOne({roomid:roomIdToCheck});
-                if(room){
-                    roomcapacity=room.capacity;
-                }
-=======
         const roomIdToCheck=data.roomid ?? currentRoomId;
 
         if(roomIdToCheck && data.attendees.length>0){
@@ -231,7 +243,6 @@ export const validateBookingUpdateData=async(data:{
                     throw new bookingValidationError("Booking validation failed",["The room you are trying to book does not exist"]);
                 }
                 roomcapacity=room.capacity;
->>>>>>> Stashed changes
             }
         validateAttendees(roomcapacity,data.attendees);
         updates.attendees=data.attendees;
@@ -242,8 +253,4 @@ export const validateBookingUpdateData=async(data:{
     }
 
     return updates;
-<<<<<<< Updated upstream
 };
-=======
-};
->>>>>>> Stashed changes

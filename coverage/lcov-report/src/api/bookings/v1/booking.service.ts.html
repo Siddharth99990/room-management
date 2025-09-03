@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">91.59% </span>
+                <span class="strong">90.99% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>109/119</span>
+                <span class='fraction'>101/111</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">73.21% </span>
+                <span class="strong">69.38% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>41/56</span>
+                <span class='fraction'>34/49</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">90.82% </span>
+                <span class="strong">90.09% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>99/109</span>
+                <span class='fraction'>91/101</span>
             </div>
         
             
@@ -375,32 +375,12 @@
 <a name='L310'></a><a href='#L310'>310</a>
 <a name='L311'></a><a href='#L311'>311</a>
 <a name='L312'></a><a href='#L312'>312</a>
-<a name='L313'></a><a href='#L313'>313</a>
-<a name='L314'></a><a href='#L314'>314</a>
-<a name='L315'></a><a href='#L315'>315</a>
-<a name='L316'></a><a href='#L316'>316</a>
-<a name='L317'></a><a href='#L317'>317</a>
-<a name='L318'></a><a href='#L318'>318</a>
-<a name='L319'></a><a href='#L319'>319</a>
-<a name='L320'></a><a href='#L320'>320</a>
-<a name='L321'></a><a href='#L321'>321</a>
-<a name='L322'></a><a href='#L322'>322</a>
-<a name='L323'></a><a href='#L323'>323</a>
-<a name='L324'></a><a href='#L324'>324</a>
-<a name='L325'></a><a href='#L325'>325</a>
-<a name='L326'></a><a href='#L326'>326</a>
-<a name='L327'></a><a href='#L327'>327</a>
-<a name='L328'></a><a href='#L328'>328</a>
-<a name='L329'></a><a href='#L329'>329</a>
-<a name='L330'></a><a href='#L330'>330</a>
-<a name='L331'></a><a href='#L331'>331</a>
-<a name='L332'></a><a href='#L332'>332</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L313'></a><a href='#L313'>313</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">4x</span>
@@ -507,25 +487,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -725,6 +686,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">19x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import mongoose from "mongoose";
 import { getNextSequence } from "../../../utils/getNextSequence";
 import Booking from '../../../models/booking.model';
@@ -734,7 +696,6 @@ import bookingInterface from '../../../models/room.model'
 import User from '../../../models/user.model';
 import userModel from "../../../models/user.model";
 import { checkBookingConflicts } from "./helpers/conflictchecker.helper";
-import { sendInvitation } from "../../../utils/email.util";
 &nbsp;
 &nbsp;
 interface createBookingData{
@@ -840,25 +801,6 @@ export const createBookingService=async(
         const populatedBooking=await Booking.findOne({bookingid:nextBookingId})
         .populate({path:'roomid',foreignField:"roomid",select:'roomname capacity roomlocation -_id'})
         .select("-_id -__v -updatedAt -attendees._id -attendees.acceptedAt ");
-&nbsp;
-        if (populatedBooking &amp;&amp; populatedBooking.attendees &amp;&amp; populatedBooking.attendees.length &gt; 0) {
-            try {
-                for (const attendee of populatedBooking.attendees) {
-                    // Fetch attendee user to get email
-                    const attendeeUser = await User.findOne({ userid: attendee.userid });
-                    if (attendeeUser &amp;&amp; attendeeUser.email) {
-                        await sendInvitation({
-                            to: attendeeUser.email,
-                            attendeeName: attendee.name,
-                            booking: populatedBooking,
-                            attendeeUserId: attendee.userid
-                        });
-                    }
-                }
-            } catch (emailError) {
-                console.error("Failed to send invitation emails:", emailError);
-            }
-        }
 &nbsp;
         return populatedBooking;
     
@@ -1056,14 +998,15 @@ export const getAvailableRoomsService=async(
         message:`${availableRooms.length} rooms available for the requested time slot`,
         availableRooms:availableRooms.map(room=&gt;room.toObject())
     };
-}</pre></td></tr></table></pre>
+}
+&nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
             </div><!-- /wrapper -->
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-24T16:53:42.018Z
+                at 2025-08-25T03:20:25.287Z
             </div>
         <script src="../../../../prettify.js"></script>
         <script>

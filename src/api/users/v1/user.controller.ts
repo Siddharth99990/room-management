@@ -3,8 +3,9 @@ import { createUserService ,
         getUsersService,
         finduserByIdService,
         updateUserInfoService,
-        softDeleteUsersByIdService} from './user.service';
-import {validationError,validateUserRegistrationData,validateUserUpdateData} from './user.validation';
+        softDeleteUsersByIdService,
+        deleteOwnAccountService} from './user.service';
+import {validationError,validateUserRegistrationData,validateUserUpdateData, validateDeleteAccountData} from './user.validation';
 import User from '../../../models/user.model';
 import { errors } from 'mongodb-memory-server';
 
@@ -30,7 +31,7 @@ export const registerUser= async(req:Request,res:Response)=>{
         if(err instanceof validationError){
             return res.status(err.statusCode).json(
                 {success:false,
-                message:"Something went wrong",
+                message:err.errors,
                 errors:err.errors
             });
         }
@@ -102,6 +103,13 @@ export const updateUserInfo=async(req:Request,res:Response)=>{
 //deletebyid
 export const deleteUserById=async(req:Request,res:Response)=>{
     try{
+        if(Number(req.user?.userid ?? req.user?.id) === Number(req.params.userid)){
+            return res.status(403).json({
+                success:false,
+                message:"Cannot delete the user you are logged in as",
+                error:"Cannot delete the user you are logged in as"
+            })
+        }
         const result=await softDeleteUsersByIdService(Number(req.params.userid));
         return res.status(200).json(result);
     }catch(err:any){
@@ -113,24 +121,41 @@ export const deleteUserById=async(req:Request,res:Response)=>{
     }
 };
 
-/*restore
-// export const restoreDeletedUsers=async(req:Request,res:Response)=>{
-//     try{
-//         const restoredusers=await restoreDeletedUsersService(Number(req.params.userid));
-//         return res.status(200).json(restoredusers);
-//     }catch(err:any){
-//         console.error("There was an error restoring ",err.message);
-//         return res.status(404).json({message:"There was an error while restoring the users",error:err.message});
-//     }
- }*/
+export const deleteOwnAccount=async(req:Request,res:Response)=>{
+    try{
+        if(!req.user){
+            return res.status(401).json({
+                success:false,
+                message:"Authentication required"
+            });
+        }
 
-//delete all
-/*export const deleteAllUsers=async(req:Request,res:Response)=>{
-//     try{
-//         const result=await softdeleteUsersService();
-//         return res.status(200).json(result);
-//     }catch(err:any){
-//         console.error("Error deleting the users,",err.message);
-//         return res.status(404).json({message:"There was an internal server error",error:err.message});
-//     }
- };*/
+        const validatedData=validateDeleteAccountData(req.body);
+        const response=await deleteOwnAccountService(
+            validatedData.email,
+            validatedData.password
+        );
+
+        res.clearCookie("token",{
+            httpOnly:true,
+            secure:process.env.NODE_ENV==="production",
+            sameSite:"strict"
+        });
+
+        return res.status(200).json({success:true,...response});
+    }catch(err:any){
+        console.error("Error deleting own account:", err.message);
+        if (err instanceof validationError) {
+            return res.status(err.statusCode).json({
+                success: false,
+                message: err.message,
+                errors: err.errors
+            });
+        }
+        return res.status(400).json({
+            success: false,
+            message: "Account deletion failed.",
+            error: err.message
+        });
+    }
+}

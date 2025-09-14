@@ -1,5 +1,5 @@
 import { Request,Response } from "express";
-import { changePasswordService, loginUserService } from "./auth.service";
+import { changePasswordService, loginUserService, resetPasswordService,forgetPasswordService } from "./auth.service";
 import { authValidationError, validateChangePasswordData } from "./auth.validation";
 import { bookingValidationError } from "../../bookings/v1/booking.validation";
 import { validationError } from "../../users/v1/user.validation";
@@ -52,11 +52,19 @@ export const userLogin=async(req:Request,res:Response)=>{
 export const changePassword=async(req:Request,res:Response)=>{
     try{
         const validatedData=validateChangePasswordData(req.body);
+
+        if(req.user?.email!==req.body.email){
+            return res.status(403).json({
+                success:false,
+                message:"Cannot change other users password",
+                error:"Cannot change other users password"
+            });
+        }
         const result=await changePasswordService(validatedData);
 
-        res.cookie("token",result.token,{
+        return res.cookie("token",result.token,{
             httpOnly:true,
-            sameSite:"lax",
+            sameSite:"strict",
             secure:process.env.NODE_ENV==="production",
             maxAge:24*60*60*1000
         }).status(200).json({
@@ -66,13 +74,13 @@ export const changePassword=async(req:Request,res:Response)=>{
         });
     }catch(err:any){
         if(err instanceof authValidationError){
-            res.status(400).json({
+            return res.status(400).json({
                 success:false,
                 message:err.message,
                 error:err.errors
             });
         }
-        res.status(err.statusCode||400).json({
+        return res.status(err.statusCode||400).json({
             success:false,
             message:err.message,
             error:err.errors
@@ -132,6 +140,48 @@ export const checkAuthStatus=async(req:Request,res:Response)=>{
             success:false,
             message:"Something went wrong",
             error:err.message
+        });
+    }
+};
+
+export const forgetPassword = async (req: Request, res: Response) => {
+    try {
+        const { email } = req.body;
+        const result = await forgetPasswordService(email);
+        res.status(200).json({ success: true, ...result });
+    } catch (err: any) {
+        if (err instanceof authValidationError) {
+            res.status(400).json({
+                success: false,
+                message: err.message,
+                error: err.errors,
+            });
+        }
+        res.status(err.statusCode || 400).json({
+            success: false,
+            message: err.message,
+            error: err.errors || [err.message],
+        });
+    }
+};
+
+export const resetPassword = async (req: Request, res: Response) => {
+    try {
+        const { email, otp, newPassword } = req.body;
+        const result = await resetPasswordService(email, otp, newPassword);
+        res.status(200).json({ success: true, ...result });
+    } catch (err: any) {
+        if (err instanceof authValidationError) {
+            res.status(400).json({
+                success: false,
+                message: err.message,
+                error: err.errors,
+            });
+        }
+        res.status(err.statusCode || 400).json({
+            success: false,
+            message: err.message,
+            error: err.errors || [err.message],
         });
     }
 };

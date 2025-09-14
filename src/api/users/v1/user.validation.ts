@@ -107,7 +107,7 @@ export const validateUserUpdateData=(data:any,userid:number):{
     validatedData:any;
     userid:number;
 }=>{
-    const{name,email,password}=data;
+    const{name,email,role}=data;
 
     if(!name && !email &&Object.keys(data).length===0){
         throw new validationError("Update validation failed",["Atleast one field(name or email) is needed for the update"]);
@@ -132,11 +132,12 @@ export const validateUserUpdateData=(data:any,userid:number):{
         updates.email = email;
     }
 
-    if(password!==undefined){
-        validatePassword(password);
+    if(role!==undefined){
+        validateRole(role);
+        updates.role=role;
     }
 
-    const restrictedFields=['userid','_id','isDeleted'];
+    const restrictedFields=['userid','_id','isDeleted','password'];
     const providedFields=Object.keys(data);
     const invalidFields=providedFields.filter(field=>restrictedFields.includes(field));
 
@@ -148,6 +149,27 @@ export const validateUserUpdateData=(data:any,userid:number):{
         validatedData:updates,
         userid:userid
     };
+}
+
+export const validateDeleteAccountData=(data:{email:string,password:string}):{email:string;password:string}=>{
+    const {email,password}=data;
+    const errors:string[]=[];
+
+    if(!email||email.trim()===''){
+        errors.push("Email is required for deleting account");
+    }else if(!isValidEmail(email)){
+        errors.push("Please provide a valid email address")
+    }
+
+    if(!password||password.trim()===''){
+        errors.push("Password is required for deleting account");
+    }
+
+    if(errors.length>0){
+        throw new validationError("Account deletion failed",errors);
+    }
+
+    return {email,password};
 }
 
 export const validationUtils={

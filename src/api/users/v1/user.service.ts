@@ -4,6 +4,7 @@ import User,{userInterface} from "../../../models/user.model";
 import { getNextSequence } from '../../../utils/getNextSequence';
 import { sendEmail } from '../../../utils/email.util';
 import { validationError } from './user.validation';
+import bcrypt from 'bcrypt';
 
 //create
 export const createUserService=async(name:string,email:string,password:string,role:string)=>{
@@ -126,72 +127,30 @@ export const softDeleteUsersByIdService = async (useridentity: number) => {
     };
 }
 
-/*export const getUsersMarkedForDeleteService=async()=>{
-    const deletedUsers=await User.find({$or:[{isDeleted:{$eq:true}},{isDeleted:{$exists:true}}]}).select('-password');
-    if(deletedUsers.length===0){
-        throw new Error("There are no users currently marked for delete");
-    }
-    return deletedUsers.map(user=>user.toObject());
-};*/
+export const deleteOwnAccountService=async(email:string,password:string):Promise<{message:string}>=>{
+  const user=await User.findOne({email}).select('+password');
 
-/*restore
-// export const restoreDeletedUsersService=async(userid:number)=>{
-//     if(typeof userid!=='number'||isNaN(userid)){
-//         throw new Error("Please enter a valid user id to restore");
-//     }
-//         const filter = {
-//         $and: [
-//             { userid: {$eq:userid} },
-//             { isDeleted:true }
-//         ]
-//     };
-//     const user=await User.collection.findOne(filter);
-//     if(!user){
-//         throw new Error("The user you are trying to restore either does not exist or is already restored");
-//     }
+  if(!user){
+    throw new Error("User not found");
+  }
 
-//     await User.collection.findOneAndUpdate(
-//         filter,
-//         { $set:{ isDeleted: false, deletedAt: null }},
-//     )
+  if(user.email!==email){
+    throw new Error("Email does not match the user");
+  }
 
-//     return{
-//         message:"The user has been successfully restored",
-//         restoreduser:user.name
-//     };
- }*/
+  const isPasswordValid=await bcrypt.compare(password,user.password);
 
-/*delete
-// export const softdeleteUsersService=async ()=>{
-//     try{
-//         const count=await User.countDocuments({$or:[
-//         {isDeleted:{$ne:true}},
-//         {isDeleted:{$exists:false}}
-//         ]});
-//         if(count===0){
-//             throw new Error("Couldnt delete user data as there are no entries");
-//         }
-//         const users=await User.find({$or:[{isDeleted:{$ne:true}},{isDeleted:{$exists:false}}]});
-//         const userList=users.map(user=>user.name);
+  if(!isPasswordValid){
+    throw new Error("Password does not match");
+  }
 
-//         await User.updateMany(
-//                 {$or: [{ isDeleted: { $ne: true } },{ isDeleted: { $exists: false } }]},
-//                     {
-//                         $set: {
-//                             isDeleted: true,
-//                             deletedAt: new Date()
-//                         }
-//                     },
-//                 );
-//         return{
-//         message:`The number of users marked as deleted are ${count}`,
-//         deletedUserList:userList
-//         };
-//     }catch(err:any){
-//         return{
-//             message:"There was an error marking users for delete",
-//             error:err.message
-//         }
-//     }
-};*/
+  await User.findOneAndUpdate(
+    {email:email},
+    {$set:{isDeleted:true,deletedAt:new Date()}}
+  );
+
+  return {
+    message:"Your account has been deleted successfully."
+  };
+}
      

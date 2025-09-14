@@ -1,11 +1,21 @@
 import jwt,{JwtPayload} from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
+import crypto from 'crypto';
 import User from '../../../models/user.model';
+import OTP from '../../../models/otp.model';
 import { validateLoginData,validateTokenFormat,authValidationError } from './auth.validation';
+import { sendEmail } from '../../../utils/email.util';
 
 interface loginCredentials{
     email:string;
     password:string;
+}
+
+interface forgetPasswordCredentials{
+    email:string;
+    otp:number;
+    newPassword:string;
+    confirmNewPassword:string;
 }
 
 interface safeUserResponse{
@@ -48,7 +58,7 @@ export const loginUserService=async(credentials:loginCredentials)=>{
             userid:user.userid,
             email:user.email,
             role:user.role,
-            isTemporaryPassword:user.isTemporaryPassword||false
+            isTemporaryPassword:user.isTemporaryPassword
         };
         const expiresvalue=process.env.JWT_EXPIRES_IN||'24h'
         const token=jwt.sign(
@@ -62,6 +72,7 @@ export const loginUserService=async(credentials:loginCredentials)=>{
             name:user.name,
             email:user.email,
             role:user.role,
+            isTemporaryPassword:user.isTemporaryPassword
         };
 
         if(user.isTemporaryPassword){
@@ -136,5 +147,54 @@ export const changePasswordService=async(credentials:changePasswordCredentials)=
         user:userResponse,
         token,
         message:"Password changed successfully"
+    };
+};
+
+export const forgetPasswordService=async(email:string)=>{
+    const user=await User.findOne({email});
+    if(!user){
+        throw new authValidationError("Invalid email",["User not found"]);
+    }
+
+    const otp=crypto.randomInt(10000,999999).toString();
+    const otpExpires=new Date(Date.now()+10*60*1000);
+
+    await OTP.create({
+        email,
+        otp,
+        expiresAt:otpExpires
+    });
+
+    sendEmail({
+        to:email,
+        subject:"Password Reset OTP",
+        text: `Your OTP for password reset is: ${otp}`
+    });
+
+    return {
+        message:"OTP sent to your email"
+    };
+};
+
+export const resetPasswordService = async (email: string, otp: string, newPassword: string) => {
+    const otpDoc = await OTP.findOne({ email, otp });
+
+    if (!otpDoc || otpDoc.expiresAt < new Date()) {
+        throw new authValidationError("Invalid or expired OTP", ["Invalid or expired OTP"]);
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+        throw new authValidationError("User not found", ["User not found"]);
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    await OTP.deleteOne({ _id: otpDoc._id });
+
+
+    return {
+        message: "Password has been reset successfully.",
     };
 };

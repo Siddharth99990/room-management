@@ -9,11 +9,8 @@ import cors from 'cors';
 dotenv.config();
 
 const corsOptions = {
-  origin: [
-    'http://localhost:3000',  // React development server
-    'http://127.0.0.1:3000'   // Alternative localhost format
-  ],
-  credentials: true,  // Important: allows cookies to be sent
+  origin:true,
+  credentials: true,  
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: [
     'Origin',
@@ -30,9 +27,9 @@ const app=express();
 
 app.use(cors(corsOptions));
 app.use(express.json());
-app.use(errorHandler);
 app.use(cookieParser());
 app.use('/api',routes);
+app.use(errorHandler);
 
 
 export default app;

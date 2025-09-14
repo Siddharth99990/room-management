@@ -134,7 +134,6 @@ export const getBookingsService=async(filters:{
 },paginationOption:paginationOptions):Promise<paginatedBookingsResult>=>{
 
     const query:any={
-        status:{$ne:"cancelled"}
     };
 
     if(filters.roomid)query.roomid=filters.roomid;
@@ -178,7 +177,7 @@ export const getBookingsService=async(filters:{
     const totalBookings=await Booking.countDocuments(query);
 
     if(totalBookings===0){
-        throw new Error("There are currently no bookings that fit the parameters");
+        throw new Error("There are currently no bookings");
     }
 
     const{page,limit,sortBy,sortOrder}=paginationOption;
@@ -250,6 +249,20 @@ export const updateStatusandTimingsService=async(bookingid:number,currentuserId:
     ).select("-_id -__v -createdAt -attendees._id -attendees.acceptedAt");
     
     return updateddata;
+}
+
+export const cancelBookingService=async(bookingid:number,currentUserId:number)=>{
+    const booking=await Booking.findOne({bookingid});
+    if(!booking){
+        throw new Error("The Booking you are trying to cancel does not exist");
+    }
+    if(booking.createdBy.userid!==currentUserId){
+        throw new Error("You are not authorized to cancel this meeting");
+    }
+
+    const updatedBooking=await Booking.findOneAndUpdate({bookingid},{$set:{status:'cancelled'}},{new:true}).select("-_id -__v -createdAt -attendees._id -attendees.acceptedAt");
+
+    return updatedBooking;
 }
 
 //get available rooms

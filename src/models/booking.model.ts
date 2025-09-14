@@ -3,8 +3,6 @@ import mongoose,{Schema,Document, mongo} from 'mongoose';
 interface Attendee{
     userid:number,
     name:string,
-    status:'accepted'|'declined'|'invited',
-    acceptedAt:Date
 }
 
 interface createdBy{
@@ -76,16 +74,6 @@ const bookingSchema=new Schema<bookingInterface>({
             type:String,
             required:true,
         },
-        status:{
-            type:String,
-            enum:['accepted','declined','invited'],
-            default:'invited',
-            required:true,
-        },
-        acceptedAt:{
-            type:Date,
-            default:null
-        }
     }]
 },{timestamps:true});
 

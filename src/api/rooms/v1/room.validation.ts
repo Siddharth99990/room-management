@@ -60,7 +60,7 @@ const isValidCapacity=(capacity:number):void=>{
         errors.push("Capacity should be provided and should be a number");
     }
 
-    if(capacity<=4 || capacity>50){
+    if(capacity<4 || capacity>50){
         errors.push("Capacity must lie in the range of 4-50");
     }
 

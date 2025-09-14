@@ -1,5 +1,5 @@
 import { Request,Response } from "express";
-import { createBookingService,getAvailableRoomsService,getBookingByIdService,getBookingsService, updateStatusandTimingsService } from "./booking.service";
+import { cancelBookingService, createBookingService,getAvailableRoomsService,getBookingByIdService,getBookingsService, updateStatusandTimingsService } from "./booking.service";
 import { bookingValidationError, validateCreateBookingData } from "./booking.validation";
 
 export const createBooking=async(req:Request,res:Response)=>{
@@ -221,6 +221,31 @@ export const updateStatusAndTimings=async(req:Request,res:Response)=>{
             message:"The booking details have been successfully updated",
             data:result
         });
+    }catch(err:any){
+        console.error("There was an error updating the booking details",err);
+        return res.status(400).json({
+            success:false,
+            message:"There was an error updating booking details",
+            error:err.errors||err.message
+        });
+    }
+}
+
+export const cancelBooking=async(req:Request,res:Response)=>{
+    try{
+        const currentUserId=req.user?.userid;
+        if(!currentUserId){
+            return res.status(401).json({
+                success:false,
+                message:"Unauthoried user not authorized"
+            });
+        }
+        const result=await cancelBookingService(Number(req.params.bookingid),currentUserId);
+        return res.status(200).json({
+            success:true,
+            message:"The Booking has been cancelled",
+            data:result
+        })
     }catch(err:any){
         console.error("There was an error updating the booking details",err);
         return res.status(400).json({

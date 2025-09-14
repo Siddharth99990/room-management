@@ -24,7 +24,7 @@ export const createRoom=async(req:Request,res:Response)=>{
             console.error("There was an error creating the room",err.errors);
             return res.status(err.statusCode).json({
                 success:false,
-                message:"Something went wrong",
+                message:err.errors,
                 errors:err.errors
             });
         }
@@ -32,7 +32,7 @@ export const createRoom=async(req:Request,res:Response)=>{
             console.error("There was an error creating the room: the room is duplicate");
             return res.status(400).json({
                 success:false,
-                message:"Duplicate value",
+                message:err.errors,
                 errors:"The roomname you entered is a duplicate"
             });
         }
@@ -46,7 +46,7 @@ export const getAllRoooms=async(req:Request,res:Response)=>{
         res.status(200).json({
             success:true,
             message:"Successfully fetched the rooms data",
-            rooms:roomresult
+            rooms:roomresult,
         });
     }catch(err:any){
         console.error("There was an error fetching the rooms:",err.message);

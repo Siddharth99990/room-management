@@ -48,80 +48,117 @@ interface paginationOptions{
 }
 
 //create booking
-export const createBookingService=async(
-    bookingData:createBookingData,
-    currentUserId:number
-)=>{
-    let committed=false;
-        const{starttime,endtime,roomid,userid,attendees,title,description}=bookingData;
+export const createBookingService = async (
+    bookingData: createBookingData,
+    currentUserId: number
+) => {
+    const session = await mongoose.startSession();
+    
+    try {
+        const result = await session.withTransaction(async () => {
+            const { starttime, endtime, roomid, userid, attendees, title, description } = bookingData;
 
-        const room=await roomModel.findOne({roomid})
-        if(!room){
-            throw new bookingValidationError("Room not found",["The specified room does not exist"]);
-        }
-
-        const user=await userModel.findOne({userid})
-        if(!user){
-            throw new bookingValidationError("User not found",["The specified user does not exist"]);
-        }
-
-        const hasConflict=await checkBookingConflicts(roomid,starttime,endtime,undefined);
-        if(hasConflict){
-            throw new bookingValidationError("Time slot conflicts with existing booking",["There is a conflict in booking timings"]);
-        }
-
-        if(attendees && attendees.length>room.capacity){
-            throw new Error(`Number of attendees (${attendees.length}) exceeds room capacity(${room.capacity})`);
-        }
-
-        let processedAttendees:any[]=[];
-        if(attendees && attendees.length>0){
-            const userIds=attendees.map(a=>a.userid);
-            const uniqueUserIds=[...new Set(userIds)];
-            if(userIds.length!==uniqueUserIds.length){
-                throw new Error('Duplicate attendees are not allowed');
+            // Find room within transaction
+            const room = await roomModel.findOne({ roomid }).session(session);
+            if (!room) {
+                throw new bookingValidationError("Room not found", ["The specified room does not exist"]);
             }
 
-            for(const attendee of attendees){
-                const attendeeUser=await User.findOne({userid:attendee.userid});
-                if(!attendeeUser){
-                    throw new Error(`Attendee with ID ${attendee.userid} not found`);
+            // Find user within transaction
+            const user = await userModel.findOne({ userid }).session(session);
+            if (!user) {
+                throw new bookingValidationError("User not found", ["The specified user does not exist"]);
+            }
+
+            // Check for conflicts within transaction - this is crucial for race condition prevention
+            const hasConflict = await checkBookingConflicts(roomid, starttime, endtime, undefined, session);
+            if (hasConflict) {
+                throw new bookingValidationError("Time slot conflicts with existing booking", ["There is a conflict in booking timings"]);
+            }
+
+            // Validate attendees count
+            if (attendees && attendees.length > room.capacity) {
+                throw new Error(`Number of attendees (${attendees.length}) exceeds room capacity (${room.capacity})`);
+            }
+
+            // Process attendees
+            let processedAttendees: any[] = [];
+            if (attendees && attendees.length > 0) {
+                const userIds = attendees.map(a => a.userid);
+                const uniqueUserIds = [...new Set(userIds)];
+                if (userIds.length !== uniqueUserIds.length) {
+                    throw new Error('Duplicate attendees are not allowed');
                 }
-                processedAttendees.push({
-                    userid:attendee.userid,
-                    name:attendee.name,
-                    status:attendee.status||'invited'
-                });
-            }
-        }
-        const nextBookingId=await getNextSequence('bookingid');
 
-        try{
-            await Booking.create({
-                bookingid:nextBookingId,
+                // Validate all attendees exist within transaction
+                for (const attendee of attendees) {
+                    const attendeeUser = await User.findOne({ userid: attendee.userid }).session(session);
+                    if (!attendeeUser) {
+                        throw new Error(`Attendee with ID ${attendee.userid} not found`);
+                    }
+                    processedAttendees.push({
+                        userid: attendee.userid,
+                        name: attendee.name,
+                        status: attendee.status || 'invited'
+                    });
+                }
+            }
+
+            // Get next booking ID within transaction
+            const nextBookingId = await getNextSequence('bookingid', session);
+
+            // Create booking within transaction
+            const newBooking = await Booking.create([{
+                bookingid: nextBookingId,
                 title,
-                description:description ||'',
+                description: description || '',
                 starttime,
                 endtime,
-                roomid:roomid,
-                createdBy:{userid:user.userid,name:user.name},
-                attendees:processedAttendees||[],
-            });
-        }catch(err:any){
-            if(err.code===11000){
-                throw new bookingValidationError("Time slot conflicts with existing booking",["There is a conflict in booking timings"]);
-            }
-            throw err;
-        }
-        
+                roomid: roomid,
+                createdBy: { userid: user.userid, name: user.name },
+                attendees: processedAttendees || [],
+            }], { session }); // Note: create with array when using session
 
-        const populatedBooking=await Booking.findOne({bookingid:nextBookingId})
-        .populate({path:'roomid',foreignField:"roomid",select:'roomname capacity roomlocation -_id'})
-        .select("-_id -__v -updatedAt -attendees._id -attendees.acceptedAt ");
+            // Return the created booking ID for further processing
+            return nextBookingId;
+        }, {
+            readPreference: 'primary',
+            readConcern: { level: 'majority' },
+            writeConcern: { w: 'majority' }
+        });
+
+        // Fetch the populated booking after successful transaction
+        const populatedBooking = await Booking.findOne({ bookingid: result })
+            .populate({ 
+                path: 'roomid', 
+                foreignField: "roomid", 
+                select: 'roomname capacity roomlocation -_id' 
+            })
+            .select("-_id -__v -updatedAt -attendees._id -attendees.acceptedAt");
 
         return populatedBooking;
-    
-}
+
+    } catch (error: any) {
+        // Handle specific MongoDB errors
+        if (error.code === 11000) {
+            throw new bookingValidationError("Time slot conflicts with existing booking", ["There is a conflict in booking timings"]);
+        }
+        
+        // Re-throw validation errors as-is
+        if (error instanceof bookingValidationError) {
+            throw error;
+        }
+        
+        // Handle transaction abortion
+        if (error.errorLabels && error.errorLabels.includes('TransientTransactionError')) {
+            throw new Error('Booking creation failed due to concurrent modifications. Please try again.');
+        }
+        
+        throw error;
+    } finally {
+        await session.endSession();
+    }
+};
 
 //get all bookings
 export const getBookingsService=async(filters:{

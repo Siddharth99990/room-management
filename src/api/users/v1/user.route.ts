@@ -1,5 +1,5 @@
 import express from 'express';
-import { getAllUsers, registerUser,getUserById, updateUserInfo,deleteUserById, deleteOwnAccount} from './user.controller';
+import { getAllUsers, registerUser,getUserById, updateUserInfo,deleteUserById} from './user.controller';
 import { requireAdmin,requireEmployeeOrAdmin,authenticateToken, requirePasswordChange } from '../../../middleware/authmiddleware';
 const router=express.Router();
 
@@ -15,9 +15,6 @@ router.put('/:userid',authenticateToken,requireEmployeeOrAdmin,requirePasswordCh
 
 //DELETE
 router.delete('/:userid',authenticateToken,requireAdmin,requirePasswordChange,deleteUserById);
-
-//DELETE own
-router.delete('/deleteown',authenticateToken,requirePasswordChange,deleteOwnAccount);
 
 export default router;
 

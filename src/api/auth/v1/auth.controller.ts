@@ -1,5 +1,5 @@
 import { Request,Response } from "express";
-import { changePasswordService, loginUserService, resetPasswordService,forgetPasswordService } from "./auth.service";
+import { changePasswordService, loginUserService, resetPasswordService,forgetPasswordService, deleteOwnAccountService } from "./auth.service";
 import { authValidationError, validateChangePasswordData } from "./auth.validation";
 import { bookingValidationError } from "../../bookings/v1/booking.validation";
 import { validationError } from "../../users/v1/user.validation";
@@ -182,6 +182,30 @@ export const resetPassword = async (req: Request, res: Response) => {
             success: false,
             message: err.message,
             error: err.errors || [err.message],
+        });
+    }
+};
+
+export const deleteOwnAccount = async (req: Request, res: Response) => {
+    try {
+        const { email, password } = req.body;
+        const result = await deleteOwnAccountService(email, password);
+        res.status(200).json({
+            success: true,
+            ...result
+        });
+    } catch (err: any) {
+        if (err instanceof authValidationError) {
+            return res.status(400).json({
+                success: false,
+                message: err.message,
+                error: err.errors
+            });
+        }
+        res.status(err.statusCode || 500).json({
+            success: false,
+            message: err.message || "Internal Server Error",
+            error: err.errors || [err.message || "Unknown error"]
         });
     }
 };

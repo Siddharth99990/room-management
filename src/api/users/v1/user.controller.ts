@@ -3,9 +3,8 @@ import { createUserService ,
         getUsersService,
         finduserByIdService,
         updateUserInfoService,
-        softDeleteUsersByIdService,
-        deleteOwnAccountService} from './user.service';
-import {validationError,validateUserRegistrationData,validateUserUpdateData, validateDeleteAccountData} from './user.validation';
+        softDeleteUsersByIdService} from './user.service';
+import {validationError,validateUserRegistrationData,validateUserUpdateData} from './user.validation';
 import User from '../../../models/user.model';
 import { errors } from 'mongodb-memory-server';
 
@@ -120,42 +119,3 @@ export const deleteUserById=async(req:Request,res:Response)=>{
         });
     }
 };
-
-export const deleteOwnAccount=async(req:Request,res:Response)=>{
-    try{
-        if(!req.user){
-            return res.status(401).json({
-                success:false,
-                message:"Authentication required"
-            });
-        }
-
-        const validatedData=validateDeleteAccountData(req.body);
-        const response=await deleteOwnAccountService(
-            validatedData.email,
-            validatedData.password
-        );
-
-        res.clearCookie("token",{
-            httpOnly:true,
-            secure:process.env.NODE_ENV==="production",
-            sameSite:"strict"
-        });
-
-        return res.status(200).json({success:true,...response});
-    }catch(err:any){
-        console.error("Error deleting own account:", err.message);
-        if (err instanceof validationError) {
-            return res.status(err.statusCode).json({
-                success: false,
-                message: err.message,
-                errors: err.errors
-            });
-        }
-        return res.status(400).json({
-            success: false,
-            message: "Account deletion failed.",
-            error: err.message
-        });
-    }
-}

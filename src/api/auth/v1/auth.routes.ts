@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { changePassword, checkAuthStatus, forgetPassword, resetPassword, userLogin, userLogout } from "./auth.controller";
+import { changePassword, checkAuthStatus, deleteOwnAccount, forgetPassword, resetPassword, userLogin, userLogout } from "./auth.controller";
 import { allowPasswordChangeOnly, authenticateToken } from "../../../middleware/authmiddleware";
 
 const router=Router();
@@ -15,4 +15,6 @@ router.put('/changepassword',authenticateToken,allowPasswordChangeOnly,changePas
 router.post('/forgetpassword',forgetPassword);
 
 router.post('/resetpassword',resetPassword);
+
+router.put('/deleteaccount',authenticateToken,deleteOwnAccount);
 export default router;

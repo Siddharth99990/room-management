@@ -127,30 +127,4 @@ export const softDeleteUsersByIdService = async (useridentity: number) => {
     };
 }
 
-export const deleteOwnAccountService=async(email:string,password:string):Promise<{message:string}>=>{
-  const user=await User.findOne({email}).select('+password');
-
-  if(!user){
-    throw new Error("User not found");
-  }
-
-  if(user.email!==email){
-    throw new Error("Email does not match the user");
-  }
-
-  const isPasswordValid=await bcrypt.compare(password,user.password);
-
-  if(!isPasswordValid){
-    throw new Error("Password does not match");
-  }
-
-  await User.findOneAndUpdate(
-    {email:email},
-    {$set:{isDeleted:true,deletedAt:new Date()}}
-  );
-
-  return {
-    message:"Your account has been deleted successfully."
-  };
-}
      

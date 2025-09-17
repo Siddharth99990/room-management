@@ -198,3 +198,33 @@ export const resetPasswordService = async (email: string, otp: string, newPasswo
         message: "Password has been reset successfully.",
     };
 };
+
+export const deleteOwnAccountService = async (email: string, password: string) => {
+    if (!email) {
+        throw new authValidationError("Email is required for deleting your account");
+    }
+    if (!password) {
+        throw new authValidationError("Password is required for deleting your account");
+    }
+
+    const user = await User.findOne({ email }).select("+password");
+
+    if (!user) {
+        throw new authValidationError("User not found");
+    }
+
+    const isValidPassword = await bcrypt.compare(password, user.password);
+
+    if (!isValidPassword) {
+        throw new authValidationError("Invalid credentials, was not able to delete account");
+    }
+
+    await User.findOneAndUpdate(
+        { email },
+        { $set: { isDeleted: true } }
+    );
+
+    return {
+        message: "Deleted account successfully"
+    };
+};

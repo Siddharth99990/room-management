@@ -151,27 +151,6 @@ export const validateUserUpdateData=(data:any,userid:number):{
     };
 }
 
-export const validateDeleteAccountData=(data:{email:string,password:string}):{email:string;password:string}=>{
-    const {email,password}=data;
-    const errors:string[]=[];
-
-    if(!email||email.trim()===''){
-        errors.push("Email is required for deleting account");
-    }else if(!isValidEmail(email)){
-        errors.push("Please provide a valid email address")
-    }
-
-    if(!password||password.trim()===''){
-        errors.push("Password is required for deleting account");
-    }
-
-    if(errors.length>0){
-        throw new validationError("Account deletion failed",errors);
-    }
-
-    return {email,password};
-}
-
 export const validationUtils={
     isValidEmail,
     validateName,
